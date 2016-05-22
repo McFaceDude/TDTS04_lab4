@@ -12,13 +12,15 @@ public class RouterNode {
             System.out.println(costs[i]);
         }
 
-       System.out.println("");
+        System.out.println("");
 
         myID = ID;
         this.sim = sim;
         myGUI =new GuiTextArea("  Output window for Router #"+ ID + "  ");
-
+        //System.out.println(" mygiu " + (myGUI == null));
         System.arraycopy(costs, 0, this.costs, 0, RouterSimulator.NUM_NODES);
+
+        printDistanceTable();
 
     }
 
@@ -37,9 +39,27 @@ public class RouterNode {
 
     //--------------------------------------------------
     public void printDistanceTable() {
-        System.out.println("NODE TABLE");
-        myGUI.println("Current table for " + myID +
-                "  at time " + sim.getClocktime());
+
+        myGUI.println(" Current table for router " + myID +"  at time " + sim.getClocktime());
+        myGUI.println();
+        myGUI.println(" Distancetable:");
+
+        myGUI.print(" Router: |    ");
+        for (int i=0; i < costs.length; i++){
+            myGUI.print(i+ "    ");
+        }
+
+        myGUI.println();
+        myGUI.print(" -----------");
+        for (int i=0; i < costs.length; i++){
+            myGUI.print("-----");
+        }
+
+        myGUI.println();
+        myGUI.print(" cost       |   ");
+        for (int i=0; i < costs.length; i++){
+            myGUI.print(costs[i]+ "    ");
+        }
     }
 
     //--------------------------------------------------
