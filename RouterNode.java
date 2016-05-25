@@ -1,12 +1,9 @@
-import java.util.ArrayList;
-import java.util.List;
 
 public class RouterNode {
     private int myID;
     private GuiTextArea myGUI;
     private RouterSimulator sim;
     private int[] costs = new int[RouterSimulator.NUM_NODES];
-
 
     //--------------------------------------------------
     public RouterNode(int ID, RouterSimulator sim, int[] costs) {
@@ -18,8 +15,10 @@ public class RouterNode {
 
         printDistanceTable(); //Initial distancetable for the router
 
+        // Loops through the number of routers, if the distance to a router is less than INFINTY and the ID
+        // is not the same as this router, then it is neighbour and we send a update with our cost list to it
         for (int i = 0; i < costs.length; i++){
-           if (costs[i] < sim.INFINITY && i != myID){
+           if (costs[i] < RouterSimulator.INFINITY && i != myID){
                RouterPacket routerPacket = new RouterPacket(ID, i, costs);
                System.out.println("mincost to router "+i+ " = "+routerPacket.mincost[i]+" from router "+ myID);
                sendUpdate(routerPacket);
@@ -29,9 +28,11 @@ public class RouterNode {
 
     //--------------------------------------------------
     public void recvUpdate(RouterPacket pkt) {
-        System.out.println();
-        System.out.println("RecvUpdate for router "+ myID +" from router "+ pkt.sourceid);
+        System.out.println("\n RecvUpdate for router "+ myID +" from router "+ pkt.sourceid);
 
+        // Loops through the received mincost list and if the cost is not 0(the cost to itself) and the cost
+        // from us to the source router + the cost from sourcerouter to another router is less
+        // than our cost to that other router, we update our linkCost to the other router
         for (int i = 0; i < pkt.mincost.length; i++){
             if (pkt.mincost[i] != 0 && pkt.mincost[i] + costs[pkt.sourceid] < costs[i]){
                 updateLinkCost(i, pkt.mincost[i] + costs[pkt.sourceid]);
@@ -42,10 +43,8 @@ public class RouterNode {
 
     //--------------------------------------------------
     private void sendUpdate(RouterPacket pkt) {
-        System.out.println("sendUpdate from router "+ myID);
-        System.out.println();
+        System.out.println("sendUpdate from router "+ myID+ "\n");
         sim.toLayer2(pkt);
-
     }
 
 
