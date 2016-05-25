@@ -89,6 +89,7 @@ public class RouterNode {
         System.out.println("updateLinkCost for router "+ myID +" to router "+ dest + " with cost "+ newcost);
         costs[dest] = newcost;
 
+        //TODO make sure the newcost overrides the old cost in the recvUpdate even though the newcost is higher
         for (int neighbour: neighbours){
 
             RouterPacket routerPacket = new RouterPacket(myID, neighbour, costs);
