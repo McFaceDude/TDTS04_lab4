@@ -1,4 +1,5 @@
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RouterNode {
     private int myID;
@@ -6,37 +7,43 @@ public class RouterNode {
     private RouterSimulator sim;
     private int[] costs = new int[RouterSimulator.NUM_NODES];
 
+
     //--------------------------------------------------
     public RouterNode(int ID, RouterSimulator sim, int[] costs) {
 
         myID = ID;
         this.sim = sim;
         myGUI =new GuiTextArea("  Output window for Router "+ ID + "  ");
-
         System.arraycopy(costs, 0, this.costs, 0, RouterSimulator.NUM_NODES);
-        int[] mincost = new int[RouterSimulator.NUM_NODES];    /* min cost to node 0 ... 3 */
-        RouterPacket routerPacket = new RouterPacket(ID, ID+1, mincost);
-        printDistanceTable();
-        for (int i=0; i < costs.length; i++){
-            for (int j = 0; j < routerPacket.mincost.length; j++){
-                System.out.println(routerPacket.mincost[j]);
-            }
 
+        printDistanceTable(); //Initial distancetable for the router
+
+        for (int i = 0; i < costs.length; i++){
+           if (costs[i] < sim.INFINITY && i != myID){
+               RouterPacket routerPacket = new RouterPacket(ID, i, costs);
+               System.out.println("mincost to router "+i+ " = "+routerPacket.mincost[i]+" from router "+ myID);
+               sendUpdate(routerPacket);
+           }
         }
-
-        sendUpdate(routerPacket);
-
     }
 
     //--------------------------------------------------
     public void recvUpdate(RouterPacket pkt) {
-        System.out.println("RecvUpdate");
+        System.out.println();
+        System.out.println("RecvUpdate for router "+ myID +" from router "+ pkt.sourceid);
+
+        for (int i = 0; i < pkt.mincost.length; i++){
+            if (pkt.mincost[i] != 0 && pkt.mincost[i] + costs[pkt.sourceid] < costs[i]){
+                updateLinkCost(i, pkt.mincost[i] + costs[pkt.sourceid]);
+            }
+        }
     }
 
 
     //--------------------------------------------------
     private void sendUpdate(RouterPacket pkt) {
-        System.out.println("sendUpdate");
+        System.out.println("sendUpdate from router "+ myID);
+        System.out.println();
         sim.toLayer2(pkt);
 
     }
@@ -45,32 +52,30 @@ public class RouterNode {
     //--------------------------------------------------
     public void printDistanceTable() {
 
-        myGUI.println();
-        myGUI.println(" Current table for router " + myID +"  at time " + sim.getClocktime());
-        myGUI.println();
-        myGUI.println(" Distancetable:");
+        myGUI.println("\n\n\n Current table for router " + myID +"  at time " + sim.getClocktime());
 
+        myGUI.println(" Distancetable:");
         myGUI.print(" Router: |    ");
         for (int i=0; i < costs.length; i++){
             myGUI.print(i+ "    ");
         }
 
-        myGUI.println();
-        myGUI.print(" -----------");
-        for (int i=0; i < costs.length; i++){
+        myGUI.print("\n -----------");
+        for (int cost : costs) {
             myGUI.print("-----");
         }
 
-        myGUI.println();
-        myGUI.print(" cost       |   ");
-        for (int i=0; i < costs.length; i++){
-            myGUI.print(costs[i]+ "    ");
+        myGUI.print("\n cost       |   ");
+        for (int cost : costs) {
+            myGUI.print(cost + "    ");
         }
-        myGUI.println();
     }
 
     //--------------------------------------------------
     public void updateLinkCost(int dest, int newcost) {
+        System.out.println("updateLinkCost for router "+ myID +" to router "+ dest + " with cost "+ newcost);
+        costs[dest] = newcost;
+        printDistanceTable(); //Prints the updated distance table
     }
 
 }

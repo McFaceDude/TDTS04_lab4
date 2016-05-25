@@ -6,8 +6,8 @@
 # or:  make test
 #
 
-JAVA = C:/Program\ Files/Java/jdk1.8.0_91/bin/java.exe
-JAVAC = C:/Program\ Files/Java/jdk1.8.0_91/bin/javac.exe
+JAVA = C:/Program\ Files/Java/jdk1.8.0_25/bin/java.exe
+JAVAC = C:/Program\ Files/Java/jdk1.8.0_25/bin/javac.exe
 
 all: RouterSimulator.class
 
