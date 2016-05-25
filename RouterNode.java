@@ -42,12 +42,13 @@ public class RouterNode {
                 costs[i] = pkt.mincost[i]+ costs[pkt.sourceid];
                 System.out.println("Cost from router "+ myID +" to router "+ i +" is updated to "+ costs[i]);
 
-                for (int j = 0; j < costs.length; j++){
-                    if (neighbours.contains(j) && j != myID){
-                        RouterPacket routerPacket = new RouterPacket(myID, j, costs);
-                        System.out.println("mincost to router "+ j +" = "+routerPacket.mincost[j]+" from router "+ myID);
-                        sendUpdate(routerPacket);
-                    }
+                for (int neighbour: neighbours){
+
+                    RouterPacket routerPacket = new RouterPacket(myID, neighbour, costs);
+                    System.out.println("mincost to router "+ neighbour +" = "+routerPacket.mincost[neighbour]+
+                            " from router "+ myID);
+                    sendUpdate(routerPacket);
+
                 }
             }
         }
@@ -86,8 +87,14 @@ public class RouterNode {
     //--------------------------------------------------
     public void updateLinkCost(int dest, int newcost) {
         System.out.println("updateLinkCost for router "+ myID +" to router "+ dest + " with cost "+ newcost);
-        //costs[dest] = newcost;
-        //printDistanceTable(); //Prints the updated distance table
+        costs[dest] = newcost;
+
+        for (int neighbour: neighbours){
+
+            RouterPacket routerPacket = new RouterPacket(myID, neighbour, costs);
+            sendUpdate(routerPacket);
+        }
+        printDistanceTable(); //Prints the updated distance table
     }
 
 }
