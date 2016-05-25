@@ -1,9 +1,12 @@
+import java.util.ArrayList;
+import java.util.List;
 
 public class RouterNode {
     private int myID;
     private GuiTextArea myGUI;
     private RouterSimulator sim;
     private int[] costs = new int[RouterSimulator.NUM_NODES];
+    private List<Integer> neighbours = new ArrayList<Integer>();
 
     //--------------------------------------------------
     public RouterNode(int ID, RouterSimulator sim, int[] costs) {
@@ -21,6 +24,7 @@ public class RouterNode {
            if (costs[i] < RouterSimulator.INFINITY && i != myID){
                RouterPacket routerPacket = new RouterPacket(ID, i, costs);
                System.out.println("mincost to router "+i+ " = "+routerPacket.mincost[i]+" from router "+ myID);
+               neighbours.add(i);
                sendUpdate(routerPacket);
            }
         }
@@ -28,14 +32,23 @@ public class RouterNode {
 
     //--------------------------------------------------
     public void recvUpdate(RouterPacket pkt) {
-        System.out.println("\n RecvUpdate for router "+ myID +" from router "+ pkt.sourceid);
+        System.out.println("\nRecvUpdate for router "+ myID +" from router "+ pkt.sourceid);
 
         // Loops through the received mincost list and if the cost is not 0(the cost to itself) and the cost
         // from us to the source router + the cost from sourcerouter to another router is less
         // than our cost to that other router, we update our linkCost to the other router
         for (int i = 0; i < pkt.mincost.length; i++){
             if (pkt.mincost[i] != 0 && pkt.mincost[i] + costs[pkt.sourceid] < costs[i]){
-                updateLinkCost(i, pkt.mincost[i] + costs[pkt.sourceid]);
+                costs[i] = pkt.mincost[i]+ costs[pkt.sourceid];
+                System.out.println("Cost from router "+ myID +" to router "+ i +" is updated to "+ costs[i]);
+
+                for (int j = 0; j < costs.length; j++){
+                    if (neighbours.contains(j) && j != myID){
+                        RouterPacket routerPacket = new RouterPacket(myID, j, costs);
+                        System.out.println("mincost to router "+ j +" = "+routerPacket.mincost[j]+" from router "+ myID);
+                        sendUpdate(routerPacket);
+                    }
+                }
             }
         }
     }
@@ -43,7 +56,7 @@ public class RouterNode {
 
     //--------------------------------------------------
     private void sendUpdate(RouterPacket pkt) {
-        System.out.println("sendUpdate from router "+ myID+ "\n");
+        System.out.println("Sending update from router "+ myID+ " to router "+ pkt.destid +"\n");
         sim.toLayer2(pkt);
     }
 
@@ -73,8 +86,8 @@ public class RouterNode {
     //--------------------------------------------------
     public void updateLinkCost(int dest, int newcost) {
         System.out.println("updateLinkCost for router "+ myID +" to router "+ dest + " with cost "+ newcost);
-        costs[dest] = newcost;
-        printDistanceTable(); //Prints the updated distance table
+        //costs[dest] = newcost;
+        //printDistanceTable(); //Prints the updated distance table
     }
 
 }
