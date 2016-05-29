@@ -19,6 +19,7 @@ public class RouterNode {
     private int[] routes = new int[RouterSimulator.NUM_NODES];
     private boolean poisonReverse = false;
     private int[] neighbourCosts = new int[RouterSimulator.NUM_NODES];
+    private int[][] neighbourTable = new int[RouterSimulator.NUM_NODES][RouterSimulator.NUM_NODES];
 
     //--------------------------------------------------
     public RouterNode(int ID, RouterSimulator sim, int[] costs) {
@@ -37,7 +38,6 @@ public class RouterNode {
         for (int i = 0; i < routes.length; i++){
 
             routes[i] = myID;
-
         }
 
         for (int i = 0; i < costs.length; i++){
@@ -56,6 +56,7 @@ public class RouterNode {
     public void recvUpdate(RouterPacket pkt) {
         System.out.println("\nRecrived Update for router "+ myID +" from router "+ pkt.sourceid);
         boolean updated = false;
+        neighbourTable[pkt.sourceid] = pkt.mincost;
 
         for (int i = 0; i < pkt.mincost.length; i++) { //loops through all the costs
 
@@ -65,7 +66,6 @@ public class RouterNode {
 
                 if (costs[i] != newCost)
                     updated = true;
-
 
                 costs[i] = newCost;
 
@@ -87,14 +87,12 @@ public class RouterNode {
                     System.out.println("Case 3, Cost from router "+ myID +" to router "+ i +" is updated to "+ costs[i]);
                 }
             }
-
         }
 
         if (updated)
             updateNeighbours();
 
     }
-
 
 
 
@@ -157,9 +155,21 @@ public class RouterNode {
     public void updateLinkCost(int dest, int newcost) {
         System.out.println("updateLinkCost for router "+ myID +" to router "+ dest + " with cost "+ newcost);
 
-
         neighbourCosts[dest] = newcost;
-        costs[dest] = newcost;
+
+        for (int neighbour: neighbours) {
+
+
+            if ((neighbourCosts[neighbour] + neighbourTable[neighbour][dest]) <= newcost) {
+                costs[dest] = neighbourCosts[neighbour] + neighbourTable[neighbour][dest];
+                routes[dest] = neighbour;
+            }
+            else{
+                costs[dest] = newcost;
+
+            }
+        }
+
         updateNeighbours();
 
 
