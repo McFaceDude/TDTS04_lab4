@@ -33,8 +33,10 @@ public class RouterNode {
         // Loops through the number of routers, if the distance to a router is less than INFINTY and the ID
         // is not the same as this router, then it is neighbour and we send a update with our cost list to it
 
-        for (int route :routes){
-            routes[route] = myID;
+        for (int i = 0; i < routes.length; i++){
+
+            routes[i] = myID;
+
         }
 
         for (int i = 0; i < costs.length; i++){
@@ -54,27 +56,27 @@ public class RouterNode {
         System.out.println("\nRecrived Update for router "+ myID +" from router "+ pkt.sourceid);
         boolean updated = false;
 
+        for (int i = 0; i < pkt.mincost.length; i++) { //loops through all the costs
 
-        for (int routerID = 0; routerID < pkt.mincost.length; routerID++) { //loops through all the costs
+            int newCost = pkt.mincost[i] + costs[pkt.sourceid];
 
-            int newCost = pkt.mincost[routerID] + costs[pkt.sourceid];
+            if (newCost < costs[i]){
 
-            if (newCost < costs[routerID]){
-
-                costs[routerID] = newCost;
-                System.out.println("Case 1, Cost from router "+ myID +" to router "+ routerID +" is updated to "+ costs[routerID]);
-                routes[routerID] = pkt.sourceid;
+                costs[i] = newCost;
+                System.out.println("Case 1, Cost from router "+ myID +" to router "+ i +" is updated to "+ costs[i]);
+                routes[i] = pkt.sourceid;
                 updated = true;
 
             }
+
+
+            else if (neighbourCosts[i] < newCost){
+                costs[i] = neighbourCosts[i];
+                updated = true;
+            }
+            /*
             else if (pkt.sourceid == routes[routerID]) {
                 System.out.println("\npkt.sourceid = " + pkt.sourceid);
-
-
-
-
-
-
 
                 System.out.println("Case 2, Cost from router "+ myID +" to router "+ routerID +" is updated from " +
                         costs[routerID] + " to "+ newCost);
@@ -83,22 +85,22 @@ public class RouterNode {
 
                 updated = true;
 
-            }
+            }*/
 
         }
-
-        if (updated){
+        if (updated) {
             updateNeighbours();
         }
-
     }
 
 
+
+
     private void updateNeighbours(){
+        /*
         int[] tempCost = new int[costs.length];
         System.arraycopy(costs, 0, tempCost, 0, costs.length);
         RouterPacket routerPacket = null;
-
         for (int routerID = 0; routerID < costs.length; routerID++){
 
             if (!neighbours.contains(routerID) && poisonReverse){
@@ -110,9 +112,10 @@ public class RouterNode {
 
                 routerPacket = new RouterPacket(myID, routerID, costs);
             }
-        }
+        }*/
 
-        for (int neighbour: neighbours){
+        for (int i = 0; i< neighbours.size(); i++){
+            RouterPacket routerPacket = new RouterPacket(myID, neighbours.get(i), costs);
             sendUpdate(routerPacket);
         }
     }
@@ -151,7 +154,18 @@ public class RouterNode {
     public void updateLinkCost(int dest, int newcost) {
         System.out.println("updateLinkCost for router "+ myID +" to router "+ dest + " with cost "+ newcost);
 
-        neighbourCosts[dest] = newcost;
+        for ( int i = 0; i < routes.length; i++){
+            System.out.println("route to " + i +" = " + routes[i]);
+        }
+
+
+        for (int i = 0; i < routes.length; i++) {
+            if (routes[i] == dest && i == dest) {
+                neighbourCosts[dest] = newcost;
+            }
+        }
+
+
         for (int neighbour: neighbours){
 
             RouterPacket routerPacket = new RouterPacket(myID, neighbour, costs);
