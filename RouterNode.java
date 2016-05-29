@@ -17,7 +17,7 @@ public class RouterNode {
     private int[] costs = new int[RouterSimulator.NUM_NODES];
     private List<Integer> neighbours = new ArrayList<Integer>();
     private int[] routes = new int[RouterSimulator.NUM_NODES];
-    private boolean poisonReverse = false;
+    private boolean poisonReverse = true;
     private int[] neighbourCosts = new int[RouterSimulator.NUM_NODES];
     private int[][] neighbourTable = new int[RouterSimulator.NUM_NODES][RouterSimulator.NUM_NODES];
 
@@ -68,7 +68,7 @@ public class RouterNode {
                     updated = true;
 
                 costs[i] = newCost;
-
+                System.out.println("Case 1, Cost from router "+ myID +" to router "+ i +" is updated to "+ costs[i]);
             }
 
             else if (newCost < costs[i]){
@@ -97,26 +97,32 @@ public class RouterNode {
 
 
     private void updateNeighbours(){
-        /*
+
         int[] tempCost = new int[costs.length];
         System.arraycopy(costs, 0, tempCost, 0, costs.length);
-        RouterPacket routerPacket = null;
-        for (int routerID = 0; routerID < costs.length; routerID++){
+        RouterPacket routerPacket;
 
-            if (!neighbours.contains(routerID) && poisonReverse){
-                System.out.println("BAAAAJS!!!!!!!!!!!");
-                tempCost[routerID] = RouterSimulator.INFINITY;
-                routerPacket = new RouterPacket(myID, routerID, tempCost);
+        if (poisonReverse){
+            for (int i = 0; i < tempCost.length; i++) {
+                if (!neighbours.contains(i)) {
+                    tempCost[i] = RouterSimulator.INFINITY;
+                }
+                else{
+                    tempCost[i] = costs[i];
+                }
             }
-            else {
-
-                routerPacket = new RouterPacket(myID, routerID, costs);
+            for (int i = 0; i< neighbours.size(); i++){
+                routerPacket = new RouterPacket(myID, neighbours.get(i), tempCost);
+                System.out.println("POISION!!!!!!!!!!!");
+                sendUpdate(routerPacket);
             }
-        }*/
+        }
 
-        for (int i = 0; i< neighbours.size(); i++){
-            RouterPacket routerPacket = new RouterPacket(myID, neighbours.get(i), costs);
-            sendUpdate(routerPacket);
+        else {
+            for (int i = 0; i < neighbours.size(); i++) {
+                routerPacket = new RouterPacket(myID, neighbours.get(i), costs);
+                sendUpdate(routerPacket);
+            }
         }
     }
 
