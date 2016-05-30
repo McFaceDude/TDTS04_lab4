@@ -17,9 +17,10 @@ public class RouterNode {
     private int[] costs = new int[RouterSimulator.NUM_NODES];
     private List<Integer> neighbours = new ArrayList<Integer>();
     private int[] routes = new int[RouterSimulator.NUM_NODES];
-    private boolean poisonReverse = true;
     private int[] neighbourCosts = new int[RouterSimulator.NUM_NODES];
     private int[][] neighbourTable = new int[RouterSimulator.NUM_NODES][RouterSimulator.NUM_NODES];
+
+    boolean poisonReverse = true;
 
     //--------------------------------------------------
     public RouterNode(int ID, RouterSimulator sim, int[] costs) {
@@ -33,7 +34,6 @@ public class RouterNode {
 
         // Loops through the number of routers, if the distance to a router is less than INFINTY and the ID
         // is not the same as this router, then it is neighbour and we send a update with our cost list to it
-
 
         for (int i = 0; i < routes.length; i++){
 
@@ -91,38 +91,34 @@ public class RouterNode {
 
         if (updated)
             updateNeighbours();
-
     }
-
-
 
     private void updateNeighbours(){
 
         int[] tempCost = new int[costs.length];
         System.arraycopy(costs, 0, tempCost, 0, costs.length);
-        RouterPacket routerPacket;
 
-        if (poisonReverse){
-            for (int i = 0; i < tempCost.length; i++) {
-                if (!neighbours.contains(i)) {
-                    tempCost[i] = RouterSimulator.INFINITY;
+        for (int i = 0; i < neighbours.size(); i++) {
+            RouterPacket routerPacket;
+
+            if (poisonReverse) {
+                for (int j = 0; j < routes.length; j++) {
+                    if (routes[j] == neighbours.get(i)) {
+                        tempCost[j] = RouterSimulator.INFINITY;
+                    }
+
+                    else {
+                        tempCost[j] = costs[j];
+                    }
                 }
-                else{
-                    tempCost[i] = costs[i];
-                }
-            }
-            for (int i = 0; i< neighbours.size(); i++){
                 routerPacket = new RouterPacket(myID, neighbours.get(i), tempCost);
-                System.out.println("POISION!!!!!!!!!!!");
-                sendUpdate(routerPacket);
             }
-        }
 
-        else {
-            for (int i = 0; i < neighbours.size(); i++) {
+            else{
                 routerPacket = new RouterPacket(myID, neighbours.get(i), costs);
-                sendUpdate(routerPacket);
             }
+
+            sendUpdate(routerPacket);
         }
     }
 
@@ -130,10 +126,8 @@ public class RouterNode {
     //--------------------------------------------------
     private void sendUpdate(RouterPacket pkt) {
         System.out.println("Sending update from router "+ myID+ " to router "+ pkt.destid +"\n");
-
         sim.toLayer2(pkt);
     }
-
 
     //--------------------------------------------------
     public void printDistanceTable() {
@@ -165,19 +159,14 @@ public class RouterNode {
 
         for (int neighbour: neighbours) {
 
-
             if ((neighbourCosts[neighbour] + neighbourTable[neighbour][dest]) <= newcost) {
                 costs[dest] = neighbourCosts[neighbour] + neighbourTable[neighbour][dest];
                 routes[dest] = neighbour;
             }
             else{
                 costs[dest] = newcost;
-
             }
         }
-
         updateNeighbours();
-
-
     }
 }
