@@ -22,7 +22,7 @@ public class RouterNode {
     private int[][] neighbourTable = new int[RouterSimulator.NUM_NODES][RouterSimulator.NUM_NODES];
 
 
-    boolean poisonReverse = false; //For the poison reverse solution
+    boolean poisonReverse = true; //For the poison reverse solution
 
     //--------------------------------------------------
     public RouterNode(int ID, RouterSimulator sim, int[] costs) {
@@ -34,26 +34,32 @@ public class RouterNode {
 
         printDistanceTable(); //Initial distancetable for the router
 
-        //Initiates the nextHop to myID
+        //Initiates the nextHop to -1 sense we don't have any next hop otions yet
         for (int i = 0; i < nextHop.length; i++){
-            nextHop[i] = myID;
+            nextHop[i] = -1;
         }
-        /*
-        for (int neighbour = 0; neighbour < neighbourTable.length; neighbour++){
-            for (int cost = 0; cost < neighbourTable.length; cost++){
-                neighbourTable[neighbour][cost] = RouterSimulator.INFINITY;
-            }
-        }*/
 
         // Loops through the number of routers, if the distance to a router is less than INFINTY and the ID
         // is not the same as this router, then it is neighbour and we set the neigbourCost and add it to neighbours
+        // and nextHop
         for (int i = 0; i < costs.length; i++){
            if (costs[i] < RouterSimulator.INFINITY && i != myID){
                RouterPacket routerPacket = new RouterPacket(ID, i, costs);
                System.out.println("mincost to router "+i+ " = "+routerPacket.mincost[i]+" from router "+ myID);
                neighbours.add(i);
                neighbourCosts[i] = costs[i];
+               nextHop[i] = i;
            }
+            if(i == myID){ //We can go to ourself my hopping to ourselfs
+                nextHop[i] = myID;
+            }
+        }
+
+        //Initiate the neigbourTable
+        for (int neighbour = 0; neighbour < neighbours.size(); neighbour++){
+            for (int cost = 0; cost < neighbourTable.length; cost++){
+                neighbourTable[neighbours.get(neighbour)][cost] = RouterSimulator.INFINITY;
+            }
         }
 
         updateNeighbours(); //Update the neighbours with the current cost table for the router
@@ -67,8 +73,9 @@ public class RouterNode {
                                                     // that sent the pkt
         for (int neighbour = 0; neighbour < neighbourTable.length; neighbour++){
             for (int cost = 0; cost < neighbourTable.length; cost++){
-                System.out.println("neighbourTable = " + neighbourTable[neighbour][cost]);
+                System.out.print(" Nbr: "+ neighbour + " cost: "+ neighbourTable[neighbour][cost]);
             }
+            System.out.println("");
         }
 
 
@@ -135,7 +142,6 @@ public class RouterNode {
             else{
                 routerPacket = new RouterPacket(myID, neighbours.get(i), costs);
             }
-
             sendUpdate(routerPacket);
         }
     }
@@ -150,9 +156,9 @@ public class RouterNode {
     //--------------------------------------------------
     public void printDistanceTable() {
 
-
         myGUI.println("\n\n Current state for router " + myID + "  at time " + sim.getClocktime());
 
+        //Prints the neighbourTable for the router
         myGUI.println(" Neighbours cost tables");
         myGUI.print(" Router    |");
         for (int i = 0; i < neighbourTable.length; i++) {
@@ -164,19 +170,15 @@ public class RouterNode {
             myGUI.print("--------");
         }
 
-        for (int neighbour = 0; neighbour < neighbourTable.length; neighbour++){
-            myGUI.print("\n nbr "+ neighbour +"        |");
+        for (int neighbour = 0; neighbour < neighbours.size(); neighbour++){
+            myGUI.print("\n nbr "+ neighbours.get(neighbour) +"       |");
             for (int cost = 0; cost < neighbourTable.length; cost++) {
-                myGUI.print(F.format(neighbourTable[neighbour][cost], 9));
+                myGUI.print("|"+F.format(neighbourTable[neighbours.get(neighbour)][cost], 9));
             }
         }
 
 
-
-
-
-
-
+        //Prints the cost table and nexHop table for the router
         myGUI.println("\n\n Costs table:");
         myGUI.print(" Router    |");
         for (int i=0; i < costs.length; i++){
@@ -194,7 +196,13 @@ public class RouterNode {
         }
         myGUI.print("\n next hop |");
         for (int hop : nextHop) {
-            myGUI.print(F.format(hop,9));
+            if (hop == -1) {
+                myGUI.print(F.format("-",9));
+            }
+            else{
+                myGUI.print(F.format(hop,9));
+            }
+
         }
         myGUI.println();
     }
