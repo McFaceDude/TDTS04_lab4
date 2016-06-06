@@ -2,13 +2,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /*
-Works for install5 with no linkUpdate
-Works for install5 with linkUpdate
-Works for install4 with no linkUpdate
-Works for install4 with linkUpdate
-Works for install3 with linkUpdate
-All test cases working
-TODO implement a poision reverse boolean so tha the count to infinity porblem can occur
+
 */
 public class RouterNode {
     private int myID;
@@ -22,7 +16,7 @@ public class RouterNode {
     private int[][] neighbourTable = new int[RouterSimulator.NUM_NODES][RouterSimulator.NUM_NODES];
 
 
-    boolean poisonReverse = true; //For the poison reverse solution
+    boolean poisonReverse = false; //For the poison reverse solution
 
     //--------------------------------------------------
     public RouterNode(int ID, RouterSimulator sim, int[] costs) {
@@ -50,7 +44,7 @@ public class RouterNode {
                neighbourCosts[i] = costs[i];
                nextHop[i] = i;
            }
-            if(i == myID){ //We can go to ourself my hopping to ourselfs
+            if(i == myID){ //We can go to ourself my hopping to ourself
                 nextHop[i] = myID;
             }
         }
@@ -69,31 +63,37 @@ public class RouterNode {
     public void recvUpdate(RouterPacket pkt) {
         System.out.println("\nRecrived Update for router "+ myID +" from router "+ pkt.sourceid);
         boolean updated = false;
-        neighbourTable[pkt.sourceid] = pkt.mincost; //Update the neighbourTable with the costs table for the router
-                                                    // that sent the pkt
+
+        //Update the neighbourTable with the costs table from the sourceRouter
+        neighbourTable[pkt.sourceid] = pkt.mincost;
+
+        /*
         for (int neighbour = 0; neighbour < neighbourTable.length; neighbour++){
             for (int cost = 0; cost < neighbourTable.length; cost++){
                 System.out.print(" Nbr: "+ neighbour + " cost: "+ neighbourTable[neighbour][cost]);
             }
             System.out.println("");
-        }
+        }*/
 
 
-        for (int i = 0; i < pkt.mincost.length; i++) { //Loops through all the costs from the sourceRouter
+        for (int i = 0; i < pkt.mincost.length; i++) { //Loops through all the routers
 
+            //The newCost is our cost to the sourceRouter + the sourceRouters cost to the destinationRouter
             int newCost = pkt.mincost[i] + costs[pkt.sourceid];
 
-            if (pkt.sourceid == nextHop[i]){ //If we use the sourceRouter to get to a router, we override our old cost
-                                             //to that router with the newcost from the sourceRouter
-                if (costs[i] != newCost) //We only update if the newCost is different
+            //If we use the sourceRouter to get to a router, we override our old cost to that router
+            //with the newCost from the sourceRouter. We only update if the newCost is different.
+            if (pkt.sourceid == nextHop[i]){
+                if (costs[i] != newCost)
                     updated = true;
 
                 costs[i] = newCost;
                 System.out.println("Case 1, Cost from router "+ myID +" to router "+ i +" is updated to "+ costs[i]);
             }
 
-            else if (newCost < costs[i]){ //If the newCost is less that our current cost to a router, we change
-                //our current cost to the newcost and sets the nexHop accordingly
+            //If the newCost is less that our current cost to a router, we change our current
+            //cost to the newcost and sets the nexHop accordingly.
+            else if (newCost < costs[i]){
 
                 costs[i] = newCost;
                 nextHop[i] = pkt.sourceid;
@@ -101,8 +101,9 @@ public class RouterNode {
                 System.out.println("Case 2, Cost from router "+ myID +" to router "+ i +" is updated to "+ costs[i]);
             }
 
-            if (neighbours.contains(i)){ //If we have the router as a neighbour and we can go directly to it for less
-                                         //than our current cost, we do that
+            //If we have the router as a neighbour and we can go directly to it for less
+            //than our current cost, we do that.
+            if (neighbours.contains(i)){
                 if (neighbourCosts[i] < costs[i]){
                     costs[i] = neighbourCosts[i];
                     nextHop[i] = i;
@@ -121,26 +122,26 @@ public class RouterNode {
         int[] tempCost = new int[costs.length]; //Copy the costs table fo the poison reverse solution
         System.arraycopy(costs, 0, tempCost, 0, costs.length);
 
-        for (int i = 0; i < neighbours.size(); i++) {
+        for (int neighbourID = 0; neighbourID < neighbours.size(); neighbourID++) {
             RouterPacket routerPacket;
 
             //If we are using a neighbour to get to a router, we tell that neighbour that our distance to the router
             //is infinity so that our neighbour does not route through us.
             if (poisonReverse) {
-                for (int j = 0; j < nextHop.length; j++) {
-                    if (nextHop[j] == neighbours.get(i)) {
-                        tempCost[j] = RouterSimulator.INFINITY;
+                for (int hop = 0; hop < nextHop.length; hop++) {
+                    if (nextHop[hop] == neighbours.get(neighbourID)) {
+                        tempCost[hop] = RouterSimulator.INFINITY;
                     }
                     else {
-                        tempCost[j] = costs[j];
+                        tempCost[hop] = costs[hop];
                     }
                 }
                 //Sends the costs table with the infinit values instead of the actuall costs table for the router
-                routerPacket = new RouterPacket(myID, neighbours.get(i), tempCost);
+                routerPacket = new RouterPacket(myID, neighbours.get(neighbourID), tempCost);
             }
             // If no poison revers, we send the cotst table as it is.
             else{
-                routerPacket = new RouterPacket(myID, neighbours.get(i), costs);
+                routerPacket = new RouterPacket(myID, neighbours.get(neighbourID), costs);
             }
             sendUpdate(routerPacket);
         }
@@ -216,7 +217,7 @@ public class RouterNode {
         for (int neighbour: neighbours) {
 
             //If a neighbour has a cost to the destination router which is less than the newCost, we use the neighbours
-            //cost and update our bextHop
+            //cost and update our nextHop
             if ((neighbourCosts[neighbour] + neighbourTable[neighbour][dest]) <= newCost) {
                 costs[dest] = neighbourCosts[neighbour] + neighbourTable[neighbour][dest];
                 nextHop[dest] = neighbour;
