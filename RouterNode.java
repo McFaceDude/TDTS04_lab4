@@ -39,15 +39,12 @@ public class RouterNode {
         for (int i = 0; i < costs.length; i++){
            if (costs[i] < RouterSimulator.INFINITY && i != myID){
                RouterPacket routerPacket = new RouterPacket(ID, i, costs);
-               System.out.println("mincost to router "+i+ " = "+routerPacket.mincost[i]+" from router "+ myID);
                neighbours.add(i);
                neighbourCosts[i] = costs[i];
                nextHop[i] = i;
            }
-            if(i == myID){ //We can go to ourself my hopping to ourself
-                nextHop[i] = myID;
-            }
         }
+        nextHop[myID] = myID; //We can go to ourself my hopping to ourself
 
         //Initiate the neigbourTable
         for (int neighbour = 0; neighbour < neighbours.size(); neighbour++){
@@ -61,20 +58,10 @@ public class RouterNode {
 
     //--------------------------------------------------
     public void recvUpdate(RouterPacket pkt) {
-        System.out.println("\nRecrived Update for router "+ myID +" from router "+ pkt.sourceid);
         boolean updated = false;
 
         //Update the neighbourTable with the costs table from the sourceRouter
         neighbourTable[pkt.sourceid] = pkt.mincost;
-
-        /*
-        for (int neighbour = 0; neighbour < neighbourTable.length; neighbour++){
-            for (int cost = 0; cost < neighbourTable.length; cost++){
-                System.out.print(" Nbr: "+ neighbour + " cost: "+ neighbourTable[neighbour][cost]);
-            }
-            System.out.println("");
-        }*/
-
 
         for (int i = 0; i < pkt.mincost.length; i++) { //Loops through all the routers
 
@@ -88,7 +75,6 @@ public class RouterNode {
                     updated = true;
 
                 costs[i] = newCost;
-                System.out.println("Case 1, Cost from router "+ myID +" to router "+ i +" is updated to "+ costs[i]);
             }
 
             //If the newCost is less that our current cost to a router, we change our current
@@ -98,7 +84,6 @@ public class RouterNode {
                 costs[i] = newCost;
                 nextHop[i] = pkt.sourceid;
                 updated = true;
-                System.out.println("Case 2, Cost from router "+ myID +" to router "+ i +" is updated to "+ costs[i]);
             }
 
             //If we have the router as a neighbour and we can go directly to it for less
@@ -108,7 +93,6 @@ public class RouterNode {
                     costs[i] = neighbourCosts[i];
                     nextHop[i] = i;
                     updated = true;
-                    System.out.println("Case 3, Cost from router "+ myID +" to router "+ i +" is updated to "+ costs[i]);
                 }
             }
         }
@@ -150,7 +134,6 @@ public class RouterNode {
 
     //--------------------------------------------------
     private void sendUpdate(RouterPacket pkt) {
-        System.out.println("Sending update from router "+ myID+ " to router "+ pkt.destid +"\n");
         sim.toLayer2(pkt);
     }
 
@@ -203,15 +186,12 @@ public class RouterNode {
             else{
                 myGUI.print(F.format(hop,9));
             }
-
         }
         myGUI.println();
     }
 
     //--------------------------------------------------
     public void updateLinkCost(int dest, int newCost) {
-        System.out.println("updateLinkCost for router "+ myID +" to router "+ dest + " with cost "+ newCost);
-
         neighbourCosts[dest] = newCost; //Change the neigbourcost to the newCost
 
         for (int neighbour: neighbours) {
